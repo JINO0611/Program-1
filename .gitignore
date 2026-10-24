@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+private-data*.js
+actual-data*.json
+*.xlsx
+*.xls
+*.csv
+*.zip
+*.log
+node_modules/
+dist/
+.openai/
