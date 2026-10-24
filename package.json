@@ -1,0 +1,1 @@
+{"name":"revodix-monday-analysis","version":"3.0.0","private":true,"description":"Local quote/order analytics with explicit monday.com synchronization","engines":{"node":">=22"},"scripts":{"start":"node server.cjs","test":"node tests/model.test.cjs && node tests/erp.test.cjs && node tests/assignments.test.cjs && node tests/monday.test.cjs && node tests/server.test.cjs"}}

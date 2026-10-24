@@ -1,0 +1,10 @@
+const assert=require('node:assert/strict'),E=require('../erp-model.js'),W=require('../workbook.js');
+const headers=['사업장','견적일','견적번호','브랜드','부서','고객명','핸드폰','T/P(원)','견적\n작성자','부서'];
+const book=(rows)=>({SheetNames:['원본'],Sheets:{원본:[headers,...rows]}});
+let p=E.extractWorkbook(book([['회사A','2026-01-10','E1','maker','고객부서','개인명','010-0000-0000',1000,'작성자','영업1팀']]),'견적A.xlsx');let r=p.datasets[0].rows[0];assert.equal(r.customer,'회사A');assert.equal(r.owner,'작성자');assert.equal(r.team,'영업1팀');assert.equal(r.maker,'MAKER');assert.equal(r.amount,1000);assert(!JSON.stringify(r).includes('010-'));assert(!Object.values(r).includes('개인명'));
+let c=E.combine([p,E.extractWorkbook(book([['회사A','2026-01-10','E1','maker','고객부서','개인명','010-0000-0000',1000,'작성자','영업1팀']]),'견적B.xlsx')]);assert.equal(c.quotes.length,1);assert.equal(c.duplicates.length,1);
+let row=(year,date,amount)=>({...r,id:year+'-1',date:year+'-'+date,amount});const d={quotes:[row(2024,'02-29',10),row(2025,'02-28',20),row(2026,'02-28',30),row(2025,'12-01',1000)],orders:[row(2024,'02-29',4),row(2025,'02-28',8),row(2026,'02-28',12)]};let a=E.analyze(d,{year:2026,mode:'same',from:1,to:2});assert.deepEqual(a.yearRows.map(r=>r.quoteAmount),[0,20,30]);assert.equal(a.current.quoteAmountGrowth,50);assert.equal(a.yearRows[0].end,'2024-02-28');a=E.analyze(d,{year:2026,mode:'full'});assert.equal(a.yearRows[1].quoteAmount,1020);assert.equal(E.growth(1,0),null);
+let gap=W.compactWorksheet('<worksheet><row r="1"><c><v>0</v></c></row><row r="1000000"><c s="1"/></row></worksheet>');assert(gap.includes('<v>0</v>'));assert(!gap.includes('1000000'));assert.equal(E.rangeFor(2025,{from:1,to:2,day:29}).end,'2025-02-28');
+console.log('PASS: ERP mapping, corporate customer vs personal contact, last department column, duplicate workbooks, like-for-like cutoff, leap day, full year, zero base, formatted empty rows');
+
+let stats={removedRows:0};let compact=W.compactWorksheet('<worksheet><row><c><v>7</v></c></row>'+ '<row r="999999"/>'.repeat(20000)+'</worksheet>',stats);assert.equal(stats.removedRows,20000);assert(compact.includes('<v>7</v>'));

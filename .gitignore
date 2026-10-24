@@ -1,13 +1,19 @@
-.env
-.env.*
-!.env.example
+# Private customer and financial data must stay outside the repository.
+private-data.js
 private-data*.js
 actual-data*.json
 *.xlsx
 *.xls
 *.csv
 *.zip
-*.log
-node_modules/
+uploads/
+upload/
 dist/
 .openai/
+.env
+.env.*
+!.env.example
+*.log
+node_modules/
+monday-config*.json
+*backup*.json

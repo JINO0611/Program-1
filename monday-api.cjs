@@ -1,0 +1,13 @@
+'use strict';
+class MondayClient{
+ constructor(token,{fetchImpl=fetch,version=process.env.MONDAY_API_VERSION||'2026-10'}={}){this.token=token;this.fetchImpl=fetchImpl;this.version=version;}
+ async query(query,variables={}){if(!this.token)throw Error('monday.com API 토큰을 연결하세요.');let r;try{r=await this.fetchImpl('https://api.monday.com/v2',{method:'POST',headers:{Authorization:this.token,'Content-Type':'application/json','API-Version':this.version},body:JSON.stringify({query,variables}),signal:AbortSignal.timeout(45000),redirect:'error'});}catch{throw Error('monday.com 응답을 확인하지 못했습니다. 전송 도중이면 원격 항목을 확인한 뒤 다시 검토하세요.');}if(!r.ok)throw Error('monday.com HTTP '+r.status+' 오류입니다. 권한·사용량을 확인하세요.');const result=await r.json();if(result.errors?.length||!result.data)throw Error('monday.com 요청 오류: '+String(result.errors?.[0]?.extensions?.code||'GRAPHQL_ERROR')+' (권한·열 형식·사용량을 확인하세요)');return result.data;}
+ async me(){return (await this.query('query { me { id name } }')).me;}
+ async boards(page=1){return (await this.query('query($page:Int!){boards(limit:100,page:$page,state:active){id name}}',{page})).boards;}
+ async users(page=1){return (await this.query('query($page:Int!){users(limit:100,page:$page,status:[ACTIVE]){id name}}',{page})).users;}
+ async board(id){const b=(await this.query('query($ids:[ID!]){boards(ids:$ids){id name columns{id title type} groups{id title}}}',{ids:[id]})).boards?.[0];if(!b)throw Error('보드가 없거나 조회 권한이 없습니다.');return b;}
+ async items(id){const fields='id name column_values {id text type value}';let page=(await this.query(`query($ids:[ID!]){boards(ids:$ids){items_page(limit:100){cursor items{${fields}}}}}`,{ids:[id]})).boards?.[0]?.items_page;if(!page)throw Error('보드 데이터를 읽지 못했습니다.');let out=[],seen=new Set();for(;;){out.push(...page.items);if(out.length>100000)throw Error('보드가 100,000행을 초과합니다.');if(!page.cursor)break;if(seen.has(page.cursor))throw Error('반복된 페이지 응답입니다.');seen.add(page.cursor);page=(await this.query(`query($cursor:String!){next_items_page(limit:100,cursor:$cursor){cursor items{${fields}}}}`,{cursor:page.cursor})).next_items_page;}return out;}
+ async create(boardId,groupId,name,values){return (await this.query('mutation($board:ID!,$group:String,$name:String!,$values:JSON!){create_item(board_id:$board,group_id:$group,item_name:$name,column_values:$values){id}}',{board:boardId,group:groupId||null,name,values:JSON.stringify(values)})).create_item;}
+ async update(boardId,itemId,values){return (await this.query('mutation($board:ID!,$item:ID!,$values:JSON!){change_multiple_column_values(board_id:$board,item_id:$item,column_values:$values){id}}',{board:boardId,item:itemId,values:JSON.stringify(values)})).change_multiple_column_values;}
+}
+module.exports={MondayClient};
