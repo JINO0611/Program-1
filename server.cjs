@@ -1,7 +1,7 @@
 'use strict';
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const {MondayClient}=require('./monday-api.cjs'),Core=require('./monday-core.cjs');
-const PUBLIC=['index.html','style.css','app.js','model.js','workbook.js','erp-model.js','assignments.js','monday-ui.js','private-data.js','vendor/jszip.min.js'];
+const PUBLIC=['index.html','style.css','app.js','model.js','workbook.js','erp-model.js','assignments.js','monday-ui.js','work-ui.js','work-model.js','private-data.js','vendor/jszip.min.js'];
 function createApp({clientFactory=token=>new MondayClient(token),initialToken=process.env.MONDAY_API_TOKEN||''}={}){
  const localKey=crypto.randomBytes(32).toString('hex');let client=initialToken?clientFactory(initialToken):null,plans=new Map(),locked=false;
  const json=(res,status,obj)=>{res.writeHead(status,{'Content-Type':'application/json;charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(obj));};
